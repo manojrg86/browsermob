@@ -27,7 +27,7 @@ public class SeleniumBrowserMob {
 			capabilities.setCapability(CapabilityType.PROXY, seleniumProxy);
 
 			// start the browser up
-			URL url =new URL("http://atubh3075p.prod.ch3.s.com:4444/wd/hub");
+			URL url =new URL("http://atubh3072p.prod.ch3.s.com:4444/wd/hub");
 			WebDriver driver = new RemoteWebDriver(url,capabilities);
 
 			// create a new HAR with the label "yahoo.com"
