@@ -1,6 +1,8 @@
 package com.browsermobsample;
 
+import java.io.File;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.List;
 
 import net.lightbody.bmp.BrowserMobProxyServer;
@@ -8,8 +10,10 @@ import net.lightbody.bmp.client.ClientUtil;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarLog;
+import net.lightbody.bmp.core.har.HarNameValuePair;
 import net.lightbody.bmp.core.har.HarPage;
 
+import org.openqa.selenium.By;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.CapabilityType;
@@ -42,13 +46,18 @@ public class SeleniumBrowserMob {
 			proxyServer.newHar("sears.com");
 
 			// open yahoo.com
-			driver.get("http://www.sears.com");
-
+			driver.get("http://m.sears.com");
+			/*driver.get("http://www.sears.com/crsp/api/cart/v1/item/add?offerId=00850259000&quantity=1");
+			Thread.sleep(5000);
+			driver.navigate().to("http://www.sears.com/crsp/mx/cart#/cart");
+			Thread.sleep(10000);
+			driver.findElement(By.xpath("(//div[contains(@class,'go-to-checkout')]//button[contains(.,'Proceed to Checkout')])[1]")).click();*/
+			Thread.sleep(3000);
 			// get the HAR data
 			Har har = proxyServer.getHar();
 			readHarFile(har);
-			/*File harFile = new File("traffic.har");
-			har.writeTo(harFile);*/
+			File harFile = new File("traffic1.har");
+			har.writeTo(harFile);
 			proxyServer.stop();
 		}catch(Exception e){
 			System.out.println(e.getMessage());
@@ -81,9 +90,32 @@ public class SeleniumBrowserMob {
 			//Output "response" code of entries.
 			for (HarEntry entry : hentry)
 			{
-				System.out.println("request code: " + entry.getRequest().getMethod()); //Output request type
-				System.out.println("response code: " + entry.getRequest().getUrl()); //Output url of request
-				System.out.println("response code: " + entry.getResponse().getStatus()); // Output the 
+				//System.out.println("request code: " + entry.getRequest().getMethod()); //Output request type
+				//System.out.println("response code: " + entry.getRequest().getUrl()); //Output url of request
+				if(entry.getRequest().getUrl().contains("som.sears.com")){
+					List<HarNameValuePair> list=entry.getRequest().getQueryString();
+					for (Iterator iterator = list.iterator(); iterator
+							.hasNext();) {
+						HarNameValuePair harNameValuePair = (HarNameValuePair) iterator
+								.next();
+						System.out.println(harNameValuePair.getName()+"-->"+harNameValuePair.getValue());
+						
+					}
+
+				}
+				if(entry.getRequest().getUrl().contains("http://om.sears.com")){
+					List<HarNameValuePair> list=entry.getRequest().getQueryString();
+					for (Iterator iterator = list.iterator(); iterator
+							.hasNext();) {
+						HarNameValuePair harNameValuePair = (HarNameValuePair) iterator
+								.next();
+						System.out.println(harNameValuePair.getName()+"-->"+harNameValuePair.getValue());
+						
+					}
+
+				}
+				
+				//System.out.println("response code: " + entry.getResponse().getStatus()); // Output the 
 			}
 		}
 		catch (Exception e)
