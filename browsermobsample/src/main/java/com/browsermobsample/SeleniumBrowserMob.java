@@ -12,6 +12,7 @@ import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarLog;
 import net.lightbody.bmp.core.har.HarNameValuePair;
 import net.lightbody.bmp.core.har.HarPage;
+import net.lightbody.bmp.proxy.CaptureType;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.Proxy;
@@ -20,6 +21,9 @@ import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 public class SeleniumBrowserMob {
 	public static void main(String args[]){
 		WebDriver driver = null;
@@ -27,6 +31,7 @@ public class SeleniumBrowserMob {
 			System.out.println("In");
 			BrowserMobProxyServer proxyServer = new BrowserMobProxyServer();
 			proxyServer.start(0);
+			proxyServer.setHarCaptureTypes(CaptureType.REQUEST_HEADERS,CaptureType.RESPONSE_HEADERS);;
 			System.out.println("start proxy");
 
 			// get the Selenium proxy object
@@ -38,7 +43,7 @@ public class SeleniumBrowserMob {
 			capabilities.setCapability(CapabilityType.PROXY, seleniumProxy);
 
 			// start the browser up
-			URL url =new URL("http://atubh3072p.prod.ch3.s.com:4444/wd/hub");
+			URL url =new URL("http://localhost:4444/wd/hub");
 			driver = new RemoteWebDriver(url,capabilities);
 			System.out.println("start driver");
 
@@ -46,7 +51,7 @@ public class SeleniumBrowserMob {
 			proxyServer.newHar("sears.com");
 
 			// open yahoo.com
-			driver.get("http://m.sears.com");
+			driver.get("http://www.sears.com/search=blenders");
 			/*driver.get("http://www.sears.com/crsp/api/cart/v1/item/add?offerId=00850259000&quantity=1");
 			Thread.sleep(5000);
 			driver.navigate().to("http://www.sears.com/crsp/mx/cart#/cart");
@@ -55,9 +60,11 @@ public class SeleniumBrowserMob {
 			Thread.sleep(3000);
 			// get the HAR data
 			Har har = proxyServer.getHar();
-			readHarFile(har);
-			File harFile = new File("traffic1.har");
-			har.writeTo(harFile);
+			//readHarFile(har);
+			JsonArray array=returnJsonObject("http://www.sears.com/service/search/productSearch", har);
+			System.out.println(array.toString());
+			/*File harFile = new File("traffic1.har");
+			har.writeTo(harFile);*/
 			proxyServer.stop();
 		}catch(Exception e){
 			System.out.println(e.getMessage());
@@ -99,7 +106,7 @@ public class SeleniumBrowserMob {
 						HarNameValuePair harNameValuePair = (HarNameValuePair) iterator
 								.next();
 						System.out.println(harNameValuePair.getName()+"-->"+harNameValuePair.getValue());
-						
+
 					}
 
 				}
@@ -110,11 +117,11 @@ public class SeleniumBrowserMob {
 						HarNameValuePair harNameValuePair = (HarNameValuePair) iterator
 								.next();
 						System.out.println(harNameValuePair.getName()+"-->"+harNameValuePair.getValue());
-						
+
 					}
 
 				}
-				
+
 				//System.out.println("response code: " + entry.getResponse().getStatus()); // Output the 
 			}
 		}
@@ -124,5 +131,33 @@ public class SeleniumBrowserMob {
 			//fail("IO exception during test");
 		}
 
+	}
+
+
+	public static JsonArray returnJsonObject(String url,Har har){
+		JsonArray arr =new JsonArray();
+		HarLog log=har.getLog();
+
+		// Used for loops
+		List<HarEntry> hentry = log.getEntries(); 
+
+		for (HarEntry entry : hentry)
+		{
+			JsonObject jsonChild = new JsonObject();
+			if(entry.getRequest().getUrl().contains(url)){
+				jsonChild.addProperty("serviceUrl", entry.getRequest().getUrl());
+				List<HarNameValuePair> list=entry.getRequest().getQueryString();
+				
+				for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+					HarNameValuePair harNameValuePair = (HarNameValuePair) iterator
+							.next();
+					System.out.println(harNameValuePair.getName()+"-->"+harNameValuePair.getValue());
+					jsonChild.addProperty(harNameValuePair.getName(),harNameValuePair.getValue());
+				}
+				arr.add(jsonChild);
+			}
+
+		}
+		return arr;
 	}
 }
